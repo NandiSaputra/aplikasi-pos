@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MidtransController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Exports\LaporanExport;
+use Maatwebsite\Excel\Excel as ExcelExcel;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 
@@ -46,6 +50,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi', function () {
         return view('transaksi'); // view ini berisi <livewire:transaksi />
     })->name('transaksi');
+    // web.php
+
+
 
 });
 

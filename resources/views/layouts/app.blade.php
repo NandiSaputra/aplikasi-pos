@@ -118,6 +118,7 @@
             });
         });
     </script>
+   
   <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.clientKey') }}"></script>
   <script>
       window.addEventListener('open-snap', function(event) {
@@ -151,5 +152,6 @@
           });
       });
   </script>
+   @stack('scripts')
 </body>
 </html>

@@ -164,13 +164,16 @@ class Cart extends Component
         return;
     }
 
-        // Notifikasi hanya untuk pembayaran tunai (karena online akan redirect)
-        $this->js('window.dispatchEvent(new CustomEvent("notify", {
-            detail: {
-                type: "success",
-                message: "Transaksi berhasil disimpan!"
-            }
-        }))');
+    $this->js(<<<JS
+    Swal.fire({
+        icon: 'success',
+        title: 'Transaksi berhasil!',
+        text: 'Pembayaran tunai diterima.',
+        confirmButtonText: 'OK'
+    }).then(() => {
+        window.location.href = "/transaksi";
+    });
+JS);
     }
 
     public function resetCart()
