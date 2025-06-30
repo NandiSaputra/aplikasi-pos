@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Coupon;
 use App\Models\Products;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
@@ -16,7 +17,9 @@ class Cart extends Component
     public $paymentMethod = null;
     public $paidAmount = 0;
     public $snapToken;
-
+    public $couponCode = '';
+    public $discountAmount = 0;
+    public $appliedCoupon = null;
     protected $rules = [
         'paymentMethod' => 'required|in:cash,online',
         'paidAmount' => 'nullable|numeric|min:0',
@@ -84,7 +87,9 @@ class Cart extends Component
 
         $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
         $ppn = $subtotal * 0.10;
-        $total = $subtotal + $ppn;
+        $total = $subtotal + $ppn - $this->discountAmount;
+        if ($total < 0) $total = 0;
+        
 
         if ($this->paymentMethod === 'cash' && $this->paidAmount < $total) {
             $this->js('window.dispatchEvent(new CustomEvent("notify", {
@@ -106,7 +111,15 @@ class Cart extends Component
             'change_amount' => $this->paymentMethod === 'cash' ? $changeAmount : 0,
             'payment_method' => $this->paymentMethod,
             'payment_status' => $this->paymentMethod === 'cash' ? 'success' : 'cancelled',
+        
+            // Tambahan:
+            'coupon_code' => $this->appliedCoupon?->code,
+            'discount_amount' => $this->discountAmount,
         ]);
+        if ($this->appliedCoupon) {
+            $this->appliedCoupon->increment('used_count');
+        }
+        
 
         foreach ($cart as $productId => $item) {
             TransaksiDetail::create([
@@ -134,9 +147,8 @@ class Cart extends Component
         $this->dispatch('cartUpdated');
         $this->dispatch('refreshProducts');
 
-     //pembayaran online 
-     if ($this->paymentMethod === 'online') {
-        // Konfigurasi Midtrans
+    // pembayaran online 
+    if ($this->paymentMethod === 'online') {
         \Midtrans\Config::$serverKey = config('midtrans.serverKey');
         \Midtrans\Config::$isProduction = false;
         \Midtrans\Config::$isSanitized = true;
@@ -153,16 +165,25 @@ class Cart extends Component
             ]
         ];
     
-        $snapToken = Snap::getSnapToken($params);
+        // Cek jika transaksi sebelumnya sudah punya snap_token & pending
+        if ($transaksi->snap_token && $transaksi->payment_status === 'pending') {
+            $snapToken = $transaksi->snap_token;
+        } else {
+            $snapToken = Snap::getSnapToken($params);
+            $transaksi->update([
+                'payment_status' => 'pending',
+                'snap_token' => $snapToken, // simpan token ke DB
+            ]);
+        }
     
         $this->js('window.dispatchEvent(new CustomEvent("midtrans:open", {
-            detail: {
-                snapToken: "' . $snapToken . '"
-            }
+            detail: { snapToken: "' . $snapToken . '" }
         }))');
     
         return;
     }
+    
+
 
     $this->js(<<<JS
     Swal.fire({
@@ -183,6 +204,51 @@ JS);
         $this->paidAmount = 0;
         $this->dispatch('cartUpdated');
     }
+    public function applyCoupon()
+{
+    $code = strtoupper(trim($this->couponCode));
+    $coupon = Coupon::where('code', $code)->first();
+
+    if (!$coupon || !$coupon->isValid()) {
+        $this->discountAmount = 0;
+        $this->appliedCoupon = null;
+
+        $this->js('window.dispatchEvent(new CustomEvent("notify", {
+            detail: { type: "error", message: "Kupon tidak valid atau telah kadaluarsa." }
+        }))');
+        return;
+    }
+
+    $subtotal = collect($this->cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+
+    if ($coupon->min_purchase && $subtotal < $coupon->min_purchase) {
+        $this->discountAmount = 0;
+        $this->appliedCoupon = null;
+
+        $this->js('window.dispatchEvent(new CustomEvent("notify", {
+            detail: { type: "warning", message: "Minimal belanja Rp' . number_format($coupon->min_purchase) . ' untuk kupon ini." }
+        }))');
+        return;
+    }
+
+    $this->discountAmount = $coupon->calculateDiscount($subtotal);
+    $this->appliedCoupon = $coupon;
+
+    $this->js('window.dispatchEvent(new CustomEvent("notify", {
+        detail: { type: "success", message: "Kupon berhasil diterapkan!" }
+    }))');
+}
+public function resetCoupon()
+{
+    $this->couponCode = '';
+    $this->discountAmount = 0;
+    $this->appliedCoupon = null;
+
+    $this->js('window.dispatchEvent(new CustomEvent("notify", {
+        detail: { type: "info", message: "Kupon dibatalkan." }
+    }))');
+}
+
 
     public function render()
     {

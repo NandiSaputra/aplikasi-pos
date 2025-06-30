@@ -16,7 +16,10 @@ class Transaksi extends Model
         'paid_amount',
         'change_amount',
         'payment_method',
-        'payment_status'
+        'payment_status',
+        'snap_token',
+        'coupon_code', // ← ini penting
+    'discount_amount',
     ];
 
     // Relasi ke user

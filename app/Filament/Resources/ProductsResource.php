@@ -34,6 +34,16 @@ class ProductsResource extends Resource
                 ->preload(),
                 TextInput::make('price')->label('Price')->required(),
                 TextInput::make('stock')->label('Stock')->required(),
+                TextInput::make('discount')
+                    ->label('Diskon (%)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->default(0)
+                    ->suffix('%')
+                    ->helperText('Masukkan diskon dalam persen, contoh: 10 untuk diskon 10%')
+                    ->required(),
+
                 FileUpload::make('image')
                     ->label('Image')
                     ->disk('public')
@@ -62,6 +72,11 @@ class ProductsResource extends Resource
                 TextColumn::make('category.name')->sortable()->searchable(),
                 TextColumn::make('price')->sortable()->searchable(),
                 TextColumn::make('stock')->sortable()->searchable(),
+                TextColumn::make('discount')
+                    ->label('Diskon')
+                    ->formatStateUsing(fn ($state) => $state ? $state . '%' : '-')
+                    ->sortable(),
+
                 ImageColumn::make('image')->label('Image') ->disk('public')->width(100)->height(60),            // opsional: atur ukuran gambar
 
             

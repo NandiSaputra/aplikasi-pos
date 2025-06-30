@@ -16,7 +16,7 @@ class TransaksiList extends Component
 
     public $search = '';
     public $status = '';
-    public $dateFilter = ''; // format: Y-m-d (bisa dikembangkan jadi range)
+    public $dateFilter = '';
     public $metodePay = '';
     public $range = 'daily';
     public $selectedTransaksi = null;
@@ -30,18 +30,17 @@ class TransaksiList extends Component
     public function updatingMetodePay()  { $this->resetPage(); }
     public function updatingRange()      { $this->resetPage(); }
 
-    // Reset otomatis jika salah satu filter dipilih
     public function updatedDateFilter($value)
     {
         if (!empty($value)) {
-            $this->range = null; // kosongkan range jika dateFilter aktif
+            $this->range = null;
         }
     }
 
     public function updatedRange($value)
     {
         if (!empty($value)) {
-            $this->dateFilter = null; // kosongkan dateFilter jika range aktif
+            $this->dateFilter = null;
         }
     }
 
@@ -76,7 +75,6 @@ class TransaksiList extends Component
     {
         [$startDate, $endDate] = $this->getDateRange();
 
-        // Transaksi utama
         $transaksis = Transaksi::query()
             ->where('user_id', Auth::id())
             ->when($this->search, fn($q) =>
@@ -97,7 +95,6 @@ class TransaksiList extends Component
             ->latest()
             ->paginate(10);
 
-        // Statistik dasar
         $baseStats = Transaksi::where('user_id', Auth::id())
             ->where('payment_status', 'success')
             ->when($this->dateFilter, fn($q) =>
@@ -110,7 +107,6 @@ class TransaksiList extends Component
         $totalRevenue = $baseStats->sum('total_price');
         $totalSuccess = $baseStats->count();
 
-        // Jumlah produk terjual
         $totalProductsSold = TransaksiDetail::whereHas('transaksi', function ($q) use ($startDate, $endDate) {
             $q->where('user_id', Auth::id())
               ->where('payment_status', 'success');
@@ -122,7 +118,6 @@ class TransaksiList extends Component
             }
         })->sum('quantity');
 
-        // Data grafik penjualan
         $chartData = Transaksi::selectRaw('DATE(created_at) as date, SUM(total_price) as total')
             ->where('user_id', Auth::id())
             ->where('payment_status', 'success')
@@ -144,7 +139,6 @@ class TransaksiList extends Component
             round($v, 2)
         )->toArray();
 
-        // Produk terlaris
         $topProducts = TransaksiDetail::select('product_id', DB::raw('SUM(quantity) as qty'))
             ->whereHas('transaksi', function ($q) use ($startDate, $endDate) {
                 $q->where('user_id', Auth::id())
@@ -161,12 +155,11 @@ class TransaksiList extends Component
             ->orderByDesc('qty')
             ->limit(5)
             ->get()
-            ->map(fn($item) => (object)[
+            ->map(fn($item) => [
                 'name' => $item->product->name,
                 'qty' => (int)$item->qty,
             ]);
 
-        // Metode pembayaran chart
         $paymentMethodCount = Transaksi::where('user_id', Auth::id())
             ->where('payment_status', 'success')
             ->when($this->dateFilter, fn($q) =>
@@ -180,7 +173,6 @@ class TransaksiList extends Component
             ->pluck('total', 'payment_method')
             ->toArray();
 
-        // Kirim data chart ke JS
         $this->dispatch('updateCharts', [
             'labels' => $chartLabels,
             'values' => $chartValues,

@@ -20,6 +20,8 @@ class ProductByCategory extends Component
 
     // Untuk me-refresh list produk dari komponen luar
     protected $listeners = ['refreshProducts' => '$refresh'];
+    public $hasLowStockProducts = false;
+    public $lowStockCount = 0;
 
     public function mount()
     {
@@ -49,17 +51,16 @@ class ProductByCategory extends Component
     // Tambah ke keranjang
     public function addToCart($productId)
     {
-        $product = Products::select('id', 'name', 'price', 'image', 'stock')->findOrFail($productId);
-
+        $product = Products::select('id', 'name', 'price', 'image', 'stock', 'discount')->findOrFail($productId);
+    
         if ($product->stock <= 0) {
             return $this->js('window.dispatchEvent(new CustomEvent("notify", {
                 detail: { type: "error", message: "Stok Produk Habis!" }
             }))');
         }
-
+    
         $cart = session()->get('cart', []);
-
-        // Jika sudah ada produk di keranjang
+    
         if (isset($cart[$productId])) {
             if ($cart[$productId]['quantity'] >= $product->stock) {
                 return $this->js('window.dispatchEvent(new CustomEvent("notify", {
@@ -68,47 +69,53 @@ class ProductByCategory extends Component
             }
             $cart[$productId]['quantity']++;
         } else {
-            // Produk baru
             $cart[$productId] = [
                 'name' => $product->name,
-                'price' => $product->price,
+                'price' => $product->discounted_price, // Gunakan harga diskon
                 'image' => $product->image,
                 'quantity' => 1,
             ];
         }
-
+    
         session()->put('cart', $cart);
-
-        // Update komponen keranjang
+    
         $this->dispatch('cartUpdated');
-
-        // Notifikasi sukses
+    
         $this->js('window.dispatchEvent(new CustomEvent("notify", {
             detail: { type: "success", message: "Produk berhasil ditambahkan ke keranjang!" }
         }))');
     }
+    
 
     public function render()
     {
         $query = Products::with('category')
-            ->select('id', 'name', 'price', 'stock', 'image', 'category_id');
-
-        // Filter berdasarkan pencarian
+            ->select('id', 'name', 'price', 'stock', 'image', 'category_id', 'discount');
+    
         if (!empty($this->search)) {
             $query->where('name', 'like', '%' . $this->search . '%');
         }
-
-        // Filter berdasarkan kategori
+    
         if (!is_null($this->selectedCategory)) {
             $query->where('category_id', $this->selectedCategory);
         }
-
-        $product = $query->paginate($this->perPage);
-
+    
+        $product = $query->orderBy('stock', 'asc')->paginate($this->perPage);
+    
+        // Hitung jumlah produk yang stoknya hampir habis
+        $lowStock = $product->filter(function ($item) {
+            return $item->stock <= 10 && $item->stock > 0;
+        });
+    
+        $this->lowStockCount = $lowStock->count();
+        $this->hasLowStockProducts = $this->lowStockCount > 0;
+    
         return view('livewire.product-bycategory', [
             'product' => $product,
             'categories' => $this->categories,
             'selectedCategory' => $this->selectedCategory,
         ]);
     }
+    
+    
 }

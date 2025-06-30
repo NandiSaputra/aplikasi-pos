@@ -24,8 +24,13 @@
             background-color: #f3f4f6;
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
+            width: 0px;
+            height: 0px;
         }
+        .custom-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 10px;

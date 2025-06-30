@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->string('payment_status')->default('pending')->after('payment_method');
+        Schema::table('products', function (Blueprint $table) {
+            $table->unsignedInteger('discount')->default(0);
         });
     }
 
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
+        Schema::table('products', function (Blueprint $table) {
             //
         });
     }

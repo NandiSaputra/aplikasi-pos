@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Exports\LaporanExport;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Excel as ExcelExcel;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -51,6 +52,15 @@ Route::middleware('auth')->group(function () {
         return view('transaksi'); // view ini berisi <livewire:transaksi />
     })->name('transaksi');
     // web.php
+    Route::get('/midtrans/unfinish', function () {
+        return redirect('/transaksi')->with('status', 'Pembayaran dibatalkan oleh pengguna.');
+    });
+    Route::get('/pending', function (Request $request) {
+        $invoice = $request->query('invoice');
+        return view('pending', compact('invoice'));
+    })->name('pending.transaksi');
+    
+    
 
 
 

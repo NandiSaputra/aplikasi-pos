@@ -1,44 +1,44 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Pembayaran Pending</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-</head>
-<body>
-    <h2>Pembayaran Tertunda</h2>
-    <p>Invoice: <strong>{{ $invoice }}</strong></p>
-    <p>Status: Menunggu pembayaran.</p>
+<x-app-layout>
 
-    <button id="pay-button">🔁 Bayar Sekarang</button>
 
-    <form method="POST" action="{{ route('payment.cancel') }}" style="margin-top: 20px;">
-        @csrf
-        <input type="hidden" name="invoice" value="{{ $invoice }}">
-        <button type="submit" onclick="return confirm('Yakin ingin membatalkan transaksi ini?')">❌ Batalkan Pembayaran</button>
-    </form>
-
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.clientKey') }}"></script>
+    <div class="text-center py-20">
+        <h2 class="text-2xl font-bold text-yellow-600">Pembayaran Belum Selesai</h2>
+        <p class="mt-2 text-gray-600">Invoice: {{ $invoice }}</p>
+        <p class="mt-2">Silakan klik tombol di bawah untuk menyelesaikan pembayaran:</p>
+    
+        @php
+            $trx = \App\Models\Transaksi::where('invoice_number', $invoice)->first();
+        @endphp
+    
+        @if ($trx && $trx->snap_token)
+            <button onclick="payWithMidtrans('{{ $trx->snap_token }}')" 
+                class="mt-4 px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600">
+                Lanjutkan Pembayaran
+            </button>
+        @else
+            <p class="text-red-500 mt-4">Transaksi tidak ditemukan.</p>
+        @endif
+    </div>
+    
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key="{{ config('midtrans.clientKey') }}"></script>
     <script>
-        document.getElementById('pay-button').addEventListener('click', function () {
-            window.snap.pay("{{ $snapToken }}", {
-                onSuccess: function(result) {
-                    console.log('success', result);
-                    window.location.href = '/dashboard';
+        function payWithMidtrans(snapToken) {
+            window.snap.pay(snapToken, {
+                onSuccess: function () {
+                    window.location.href = "/transaksi";
                 },
-                onPending: function(result) {
-                    console.log('pending', result);
-                    alert('Menunggu pembayaran diselesaikan.');
+                onPending: function () {
+                    window.location.href = "/transaksi";
                 },
-                onError: function(result) {
-                    console.error(result);
-                    alert("Terjadi kesalahan saat proses pembayaran.");
+                onError: function () {
+                    alert("Gagal menyelesaikan pembayaran.");
                 },
-                onClose: function() {
-                    alert("Anda menutup pembayaran tanpa menyelesaikannya.");
+                onClose: function () {
+                    window.location.href = "/transaksi";
                 }
             });
-        });
+        }
     </script>
-</body>
-</html>
+  
+    </x-app-layout>

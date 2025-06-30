@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->string('payment_method')->nullable()->after('change_amount');
+            $table->string('coupon_code')->nullable();
+            $table->integer('discount_amount')->default(0);
         });
     }
 

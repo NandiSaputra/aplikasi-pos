@@ -19,10 +19,23 @@ class Products extends Model
         'price',
         'stock',
         'image',
+        'discount',
     ];
    
 
+    public function getOriginalPriceAttribute()
+{
+    return $this->price;
+}
 
+    public function getDiscountedPriceAttribute()
+    {
+        if ($this->discount > 0) {
+            return floor($this->price * (1 - $this->discount / 100));
+        }
+        return $this->price;
+    }
+    
  public function category()
     {
         return $this->belongsTo(Categories::class ,'category_id');

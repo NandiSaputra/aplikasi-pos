@@ -14,7 +14,13 @@ class MidtransWebhookController extends Controller
     {
         $payload = $request->all();
 
-        // Signature validation
+        // Validasi minimum field yang dibutuhkan
+        if (!isset($payload['signature_key'], $payload['order_id'], $payload['status_code'], $payload['gross_amount'])) {
+            Log::warning('Webhook Midtrans: Payload tidak lengkap.');
+            return response()->json(['message' => 'Bad Request'], 400);
+        }
+
+        // Validasi signature Midtrans
         $serverKey = config('midtrans.serverKey');
         $expectedSignature = hash('sha512',
             $payload['order_id'] .
@@ -31,44 +37,47 @@ class MidtransWebhookController extends Controller
         $orderId = $payload['order_id'];
         $transactionStatus = $payload['transaction_status'];
 
-        // Cari transaksi berdasarkan invoice_number
         $transaksi = Transaksi::where('invoice_number', $orderId)->first();
 
         if (!$transaksi) {
-            Log::warning('Transaksi tidak ditemukan untuk order_id: ' . $orderId);
+            Log::warning("Webhook Midtrans: Transaksi dengan invoice {$orderId} tidak ditemukan.");
             return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
         }
 
-        // Proses status transaksi
-        switch ($transactionStatus) {
-            case 'capture':
-            case 'settlement':
-                if ($transaksi->payment_status !== 'success') {
-                    $transaksi->update(['payment_status' => 'success']);
+        // Hanya update jika belum sukses
+        if ($transaksi->payment_status !== 'success') {
+            switch ($transactionStatus) {
+                case 'capture':
+                case 'settlement':
+                    $transaksi->update([
+                        'payment_status' => 'success',
+                    ]);
 
-                    // Kurangi stok produk
-                    foreach ($transaksi->detail as $detail) {
+                    // Kurangi stok
+                    foreach ($transaksi->details as $detail) {
                         $product = Products::find($detail->product_id);
                         if ($product) {
                             $product->decrement('stock', $detail->quantity);
                         }
                     }
 
-                    Log::info("Transaksi #{$orderId} berhasil & stok dikurangi.");
-                }
-                break;
+                    Log::info("Transaksi #{$orderId} sukses. Stok dikurangi.");
+                    break;
 
-            case 'pending':
-                $transaksi->update(['payment_status' => 'pending']);
-                Log::info("Transaksi #{$orderId} pending.");
-                break;
+                case 'pending':
+                    $transaksi->update(['payment_status' => 'pending']);
+                    Log::info("Transaksi #{$orderId} pending.");
+                    break;
 
-            case 'deny':
-            case 'expire':
-            case 'cancel':
-                $transaksi->update(['payment_status' => 'failed']);
-                Log::info("Transaksi #{$orderId} gagal/expired/cancelled.");
-                break;
+                case 'deny':
+                case 'cancel':
+                case 'expire':
+                    $transaksi->update(['payment_status' => 'failed']);
+                    Log::info("Transaksi #{$orderId} gagal/expired/cancelled.");
+                    break;
+            }
+        } else {
+            Log::info("Transaksi #{$orderId} sudah success, tidak diubah.");
         }
 
         return response()->json(['message' => 'Webhook processed']);

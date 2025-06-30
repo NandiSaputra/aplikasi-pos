@@ -1,31 +1,26 @@
-<div class="p-6 bg-white rounded-xl shadow-md space-y-8">
+<div class="p-6 bg-gray-50 rounded-xl shadow-sm space-y-8">
     <h1 class="text-3xl font-extrabold text-gray-800">📒 Riwayat Transaksi</h1>
 
     <!-- Statistik Ringkas -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-        <div class="bg-orange-50 border border-orange-200 rounded-xl p-4">
-            <div class="text-xl font-bold text-orange-600">Rp{{ number_format($totalRevenue, 0, ',', '.') }}</div>
-            <div class="text-sm text-orange-800 font-semibold">Total Penjualan</div>
+        <div class="bg-white border rounded-xl p-5 shadow-sm">
+            <div class="text-xl font-bold text-gray-800">Rp{{ number_format($totalRevenue, 0, ',', '.') }}</div>
+            <div class="text-sm text-gray-500 mt-1">Total Penjualan</div>
         </div>
-        <div class="bg-green-50 border border-green-200 rounded-xl p-4">
-            <div class="text-xl font-bold text-green-600">{{ $totalSuccess }}</div>
-            <div class="text-sm text-green-800 font-semibold">Transaksi Sukses</div>
+        <div class="bg-white border rounded-xl p-5 shadow-sm">
+            <div class="text-xl font-bold text-emerald-600">{{ $totalSuccess }}</div>
+            <div class="text-sm text-gray-500 mt-1">Transaksi Sukses</div>
         </div>
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div class="bg-white border rounded-xl p-5 shadow-sm">
             <div class="text-xl font-bold text-blue-600">{{ $totalProductsSold }}</div>
-            <div class="text-sm text-blue-800 font-semibold">Produk Terjual</div>
+            <div class="text-sm text-gray-500 mt-1">Produk Terjual</div>
         </div>
     </div>
 
     <!-- Filter -->
     <div class="grid md:grid-cols-5 gap-4">
-        <!-- Cari Invoice -->
-        <input type="text" wire:model.live="search"
-            placeholder="🔍 Cari berdasarkan Invoice"
-            class="px-4 py-2 border rounded-lg w-full focus:ring-orange-400">
-    
-        <!-- Status -->
-        <select wire:model.live="status" class="px-4 py-2 border rounded-lg w-full">
+        <input type="text" wire:model.live="search" placeholder="🔍 Cari Invoice" class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-orange-400 text-sm">
+        <select wire:model.live="status" class="px-4 py-2 border border-gray-300 rounded-xl text-sm">
             <option value="">📂 Semua Status</option>
             <option value="success">✅ Sukses</option>
             <option value="pending">⏳ Pending</option>
@@ -33,23 +28,13 @@
             <option value="cancelled">🚫 Dibatalkan</option>
             <option value="expired">⌛ Kedaluwarsa</option>
         </select>
-    
-        <!-- Metode Pembayaran -->
-        <select wire:model.live="metodePay" class="px-4 py-2 border rounded-lg w-full">
+        <select wire:model.live="metodePay" class="px-4 py-2 border border-gray-300 rounded-xl text-sm">
             <option value="">💳 Semua Metode</option>
             <option value="cash">💵 Tunai</option>
             <option value="online">🌐 Online</option>
         </select>
-    
-        <!-- Filter Tanggal Spesifik -->
-        <input type="date" wire:model.live="dateFilter"
-            placeholder="📅 Pilih tanggal spesifik"
-            title="Memilih tanggal ini akan mengabaikan filter rentang waktu"
-            class="px-4 py-2 border rounded-lg w-full">
-    
-        <!-- Rentang Waktu Otomatis -->
-        <select wire:model.live="range" class="px-4 py-2 border rounded-lg w-full"
-            title="Jika dipilih, filter tanggal spesifik akan diabaikan">
+        <input type="date" wire:model.live="dateFilter" class="px-4 py-2 border border-gray-300 rounded-xl text-sm">
+        <select wire:model.live="range" class="px-4 py-2 border border-gray-300 rounded-xl text-sm">
             <option value="">⏱ Tidak dipilih</option>
             <option value="daily">📆 Hari Ini</option>
             <option value="weekly">📅 Minggu Ini</option>
@@ -57,12 +42,11 @@
             <option value="yearly">📈 Tahun Ini</option>
         </select>
     </div>
-    
 
     <!-- Tabel Transaksi -->
-    <div class="overflow-x-auto border border-gray-200 rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
-            <thead class="bg-gray-50 text-left font-semibold text-gray-600">
+    <div class="overflow-x-auto border border-gray-200 rounded-xl">
+        <table class="min-w-full divide-y divide-gray-100 text-sm text-gray-700">
+            <thead class="bg-white text-left font-semibold text-gray-600">
                 <tr>
                     <th class="px-4 py-3">#</th>
                     <th class="px-4 py-3">Invoice</th>
@@ -73,17 +57,17 @@
                     <th class="px-4 py-3">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
+            <tbody class="divide-y divide-gray-50 bg-white">
                 @forelse($transaksis as $trx)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3">{{ $loop->iteration + ($transaksis->firstItem() - 1) }}</td>
-                        <td class="px-4 py-3 font-medium">{{ $trx->invoice_number }}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">{{ $trx->invoice_number }}</td>
                         <td class="px-4 py-3">Rp{{ number_format($trx->total_price, 0, ',', '.') }}</td>
                         <td class="px-4 py-3 capitalize">{{ $trx->payment_method }}</td>
                         <td class="px-4 py-3">
                             @php
                                 $statusColors = [
-                                    'success' => 'bg-green-100 text-green-700',
+                                    'success' => 'bg-emerald-100 text-emerald-700',
                                     'pending' => 'bg-yellow-100 text-yellow-700',
                                     'failed' => 'bg-red-100 text-red-700',
                                     'cancelled' => 'bg-gray-100 text-gray-600',
@@ -91,16 +75,20 @@
                                 ];
                                 $colorClass = $statusColors[$trx->payment_status] ?? 'bg-gray-100 text-gray-700';
                             @endphp
-                            <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
                                 {{ ucfirst($trx->payment_status) }}
                             </span>
                         </td>
-                        <td class="px-4 py-3">{{ $trx->created_at->format('d M Y, H:i') }}</td>
-                        <td class="px-4 py-3">
-                            <button wire:click="showDetail({{ $trx->id }})"
-                                class="px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow transition duration-150">
+                        <td class="px-4 py-3">{{ $trx->created_at->format('d M Y') }}</td>
+                        <td class="px-4 py-3 space-x-2">
+                            <button wire:click="showDetail({{ $trx->id }})" class="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs font-semibold shadow">
                                 🔎 Detail
                             </button>
+                            @if($trx->payment_status === 'pending' && $trx->payment_method === 'online')
+                                <a href="{{ route('pending.transaksi', ['invoice' => $trx->invoice_number]) }}" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-xs font-semibold shadow">
+                                    💳 Bayar Ulang
+                                </a>
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -112,6 +100,9 @@
         </table>
     </div>
 
+    <div class="mt-6">
+        {{ $transaksis->links() }}
+    </div>
     <!-- Grafik -->
  <!-- Grafik Penjualan -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
@@ -147,10 +138,7 @@
 </div>
 
 
-    <!-- Pagination -->
-    <div class="mt-6">
-        {{ $transaksis->links() }}
-    </div>
+ 
 
     <!-- Modal Detail Transaksi -->
     @if($showModal && $selectedTransaksi)
@@ -177,6 +165,13 @@
                         {{ ucfirst($selectedTransaksi->payment_status) }}
                     </span>
                 </div>
+                @if($selectedTransaksi->coupon_code)
+<div class="text-sm text-gray-700">
+    <span class="font-semibold block">Kupon Digunakan:</span>
+    <span class="text-green-600">{{ $selectedTransaksi->coupon_code }} (-Rp{{ number_format($selectedTransaksi->discount_amount, 0, ',', '.') }})</span>
+</div>
+@endif
+
             </div>
 
             <!-- Detail Produk -->
@@ -223,30 +218,62 @@
         topProductsChart?.destroy();
         paymentChart?.destroy();
 
-        // Penjualan Chart
+        // Validasi & fallback jika data tidak lengkap
+        const labels = Array.isArray(data.labels) ? data.labels : [];
+        const values = Array.isArray(data.values) ? data.values : [];
+        const topProducts = Array.isArray(data.topProducts) ? data.topProducts : [];
+        const paymentMethods = typeof data.paymentMethods === 'object' && data.paymentMethods !== null ? data.paymentMethods : {};
+
+        // Total Penjualan Chart (Line)
         trxChart = new Chart(document.getElementById('trxChart'), {
             type: 'line',
             data: {
-                labels: data.labels,
+                labels: labels,
                 datasets: [{
                     label: 'Total Penjualan Harian (Rp)',
-                    data: data.values,
-                    backgroundColor: 'rgba(255, 159, 64, 0.3)',
+                    data: values,
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, 'rgba(255, 159, 64, 0.4)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                        return gradient;
+                    },
                     borderColor: 'rgba(255, 99, 132, 1)',
-                    tension: 0.4,
+                    tension: 0.5,
                     fill: true,
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 800,
+                    easing: 'easeInOutQuart'
+                },
                 scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 0,
+                            font: { size: 12 }
+                        },
+                        grid: { display: false }
+                    },
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: (value) => 'Rp' + value.toLocaleString()
+                        },
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0,0,0,0.05)'
                         }
                     }
                 },
@@ -255,19 +282,20 @@
                         callbacks: {
                             label: (ctx) => 'Rp' + ctx.raw.toLocaleString()
                         }
-                    }
+                    },
+                    legend: { display: false }
                 }
             }
         });
 
-        // Produk Terlaris
+        // Produk Terlaris Chart (Bar)
         topProductsChart = new Chart(document.getElementById('topProductsChart'), {
             type: 'bar',
             data: {
-                labels: data.topProducts.map(p => p.name),
+                labels: topProducts.map(p => p.name),
                 datasets: [{
                     label: 'Jumlah Terjual',
-                    data: data.topProducts.map(p => p.qty),
+                    data: topProducts.map(p => p.qty),
                     backgroundColor: 'rgba(54, 162, 235, 0.7)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1,
@@ -288,13 +316,13 @@
             }
         });
 
-        // Metode Pembayaran
+        // Metode Pembayaran Chart (Pie)
         paymentChart = new Chart(document.getElementById('paymentChart'), {
             type: 'pie',
             data: {
-                labels: Object.keys(data.paymentMethods),
+                labels: Object.keys(paymentMethods),
                 datasets: [{
-                    data: Object.values(data.paymentMethods),
+                    data: Object.values(paymentMethods),
                     backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6'],
                 }]
             },
@@ -313,14 +341,16 @@
         });
     }
 
+    // Livewire event listener
     Livewire.on('updateCharts', data => renderCharts(data));
 
+    // Render awal saat page dimuat
     document.addEventListener("DOMContentLoaded", () => {
         renderCharts({
-            labels: @json($chartLabels),
-            values: @json($chartValues),
-            topProducts: @json($topProducts),
-            paymentMethods: @json($paymentMethodCount),
+            labels: @json($chartLabels ?? []),
+            values: @json($chartValues ?? []),
+            topProducts: @json($topProducts ?? []),
+            paymentMethods: @json($paymentMethodCount ?? []),
         });
     });
 </script>

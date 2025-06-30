@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('image')->nullable()->after('stock');
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->string('snap_token')->nullable()->after('payment_status');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            //
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->dropColumn('snap_token');
         });
     }
 };
