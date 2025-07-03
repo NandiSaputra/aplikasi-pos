@@ -23,7 +23,7 @@ class ProductsResource extends Resource
 {
     protected static ?string $model = Products::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-inbox-stack';
 
     public static function form(Form $form): Form
     {
@@ -41,8 +41,8 @@ class ProductsResource extends Resource
                     ->maxValue(100)
                     ->default(0)
                     ->suffix('%')
-                    ->helperText('Masukkan diskon dalam persen, contoh: 10 untuk diskon 10%')
-                    ->required(),
+                    ->helperText('Masukkan diskon dalam persen, contoh: 10 untuk diskon 10%'),
+                 
 
                 FileUpload::make('image')
                     ->label('Image')

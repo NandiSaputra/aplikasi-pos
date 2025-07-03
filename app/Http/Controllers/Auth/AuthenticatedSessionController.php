@@ -25,21 +25,25 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
+    
         $request->session()->regenerate();
+    
         $user = $request->user();
-
+    
+        // ✅ Simpan pesan selamat datang ke session
+        session()->flash('welcome_message', 'Halo, selamat datang kembali, ' . $user->name);
+    
         if ($user->role === 'admin') {
-            return redirect()->intended('/admin'); // Masuk ke Filament
+            return redirect()->intended('/admin');
         }
     
         if ($user->role === 'cashier') {
-            return redirect()->intended('/dashboard'); // Masuk ke dashboard kasir
+            return redirect()->intended('/dashboard')->with('welcome_message', 'Halo, selamat datang kembali ' . $user->name);
         }
     
         return redirect('/');
     }
-
+    
     /**
      * Destroy an authenticated session.
      */

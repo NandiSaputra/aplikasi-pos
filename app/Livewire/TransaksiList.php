@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
+use App\Models\Products;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -160,6 +161,27 @@ class TransaksiList extends Component
                 'qty' => (int)$item->qty,
             ]);
 
+            $allProducts = Products::select('name')
+            ->withSum(['details as qty' => function ($query) use ($startDate, $endDate) {
+                $query->whereHas('transaksi', function ($q) use ($startDate, $endDate) {
+                    $q->where('user_id', Auth::id())
+                      ->where('payment_status', 'success');
+        
+                    if ($this->dateFilter) {
+                        $q->whereDate('created_at', $this->dateFilter);
+                    } elseif ($startDate && $endDate) {
+                        $q->whereBetween('created_at', [$startDate, $endDate]);
+                    }
+                });
+            }], 'quantity')
+            ->get()
+            ->map(fn($product) => [
+                'name' => $product->name,
+                'qty' => (int)($product->qty ?? 0),
+            ])
+            ->sortByDesc('qty') // ✅ Tambahkan ini untuk urutkan dari terbesar
+            ->values(); // Optional: reset index agar tidak acak
+        
         $paymentMethodCount = Transaksi::where('user_id', Auth::id())
             ->where('payment_status', 'success')
             ->when($this->dateFilter, fn($q) =>
@@ -177,6 +199,7 @@ class TransaksiList extends Component
             'labels' => $chartLabels,
             'values' => $chartValues,
             'topProducts' => $topProducts,
+            'allProducts' => $allProducts,
             'paymentMethods' => $paymentMethodCount,
         ]);
 
@@ -188,6 +211,7 @@ class TransaksiList extends Component
             'chartLabels' => $chartLabels,
             'chartValues' => $chartValues,
             'topProducts' => $topProducts,
+            'allProducts' => $allProducts,
             'paymentMethodCount' => $paymentMethodCount,
         ]);
     }

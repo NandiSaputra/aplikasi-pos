@@ -40,5 +40,10 @@ class Products extends Model
     {
         return $this->belongsTo(Categories::class ,'category_id');
     }
+    public function details()
+{
+    return $this->hasMany(TransaksiDetail::class, 'product_id');
 }
+}
+
 

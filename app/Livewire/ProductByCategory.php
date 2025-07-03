@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Categories;
 use App\Models\Products;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -22,6 +23,11 @@ class ProductByCategory extends Component
     protected $listeners = ['refreshProducts' => '$refresh'];
     public $hasLowStockProducts = false;
     public $lowStockCount = 0;
+    public $outOfStockCount = 0;
+    public $hasOutOfStockProducts = false;
+    public $bestSellerIds = [];
+    public $sortBy = 'default'; // pilihan: default, terbaru, terlaris
+
 
     public function mount()
     {
@@ -90,7 +96,7 @@ class ProductByCategory extends Component
     public function render()
     {
         $query = Products::with('category')
-            ->select('id', 'name', 'price', 'stock', 'image', 'category_id', 'discount');
+            ->select('id', 'name', 'price', 'stock', 'image', 'category_id', 'discount', 'created_at');
     
         if (!empty($this->search)) {
             $query->where('name', 'like', '%' . $this->search . '%');
@@ -100,22 +106,58 @@ class ProductByCategory extends Component
             $query->where('category_id', $this->selectedCategory);
         }
     
-        $product = $query->orderBy('stock', 'asc')->paginate($this->perPage);
+        // Ambil produk terlaris
+        $this->bestSellerIds = DB::table('transaction_details')
+            ->select('product_id')
+            ->groupBy('product_id')
+            ->orderByRaw('SUM(quantity) DESC')
+            ->pluck('product_id')
+            ->toArray();
     
-        // Hitung jumlah produk yang stoknya hampir habis
-        $lowStock = $product->filter(function ($item) {
-            return $item->stock <= 10 && $item->stock > 0;
-        });
+        // Ambil semua produk untuk sorting manual
+        $allProducts = $query->get();
     
-        $this->lowStockCount = $lowStock->count();
+        // Sorting manual berdasarkan pilihan
+        $sorted = match ($this->sortBy) {
+            'terbaru' => $allProducts->sortByDesc('created_at'),
+            'terlaris' => $allProducts->sortBy(function ($item) {
+                $index = array_search($item->id, $this->bestSellerIds);
+                return $index !== false ? $index : PHP_INT_MAX;
+            }),
+            'stok_habis' => $allProducts->sortBy(function ($item) {
+                return $item->stock <= 0 ? 1 : 0; // stok habis di akhir
+            }),
+            default => $allProducts->sortByDesc('stock') // default: stok terbanyak dulu
+        };
+    
+        // Pagination manual
+        $currentPage = $this->page ?? 1;
+        $perPage = $this->perPage;
+        $paged = $sorted->values()->forPage($currentPage, $perPage);
+    
+        $product = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paged,
+            $sorted->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+    
+        // Hitung status stok
+        $this->lowStockCount = $allProducts->filter(fn($item) => $item->stock <= 10 && $item->stock > 0)->count();
         $this->hasLowStockProducts = $this->lowStockCount > 0;
+        $this->outOfStockCount = $allProducts->filter(fn($item) => $item->stock <= 0)->count();
+        $this->hasOutOfStockProducts = $this->outOfStockCount > 0;
     
         return view('livewire.product-bycategory', [
             'product' => $product,
             'categories' => $this->categories,
             'selectedCategory' => $this->selectedCategory,
+            'bestSellerIds' => $this->bestSellerIds,
         ]);
     }
+    
+    
     
     
 }

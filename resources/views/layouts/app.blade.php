@@ -8,7 +8,7 @@
 
     <!-- Tailwind CSS & JS via Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    @filamentStyles
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Livewire Styles -->
     @livewireStyles
@@ -51,53 +51,70 @@
             }
         }
     </style>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    
 </head>
-<body class="h-full">
+<body class="h-full" >
+
+      <!-- Navbar Mobile -->
+<header class="lg:hidden flex justify-between items-center px-4 py-3 bg-white border-b shadow">
+    <button onclick="toggleSidebar()">
+        <i class="fas fa-bars text-xl text-gray-700"></i>
+    </button>
+    <a href="{{ route('dashboard') }}" class="text-orange-500 text-2xl">
+        <i class="fas fa-utensils"></i>
+    </a>
+</header>
+
+    
     <div class="flex h-full w-full">
-      
+
        
-      <!-- Sidebar -->
-<div class="w-20 bg-white h-screen flex flex-col justify-between items-center py-6 shadow-md border-r border-gray-200">
 
-    <!-- Logo -->
-    <div>
-        <a href="{{ route('dashboard') }}" class="text-orange-500 text-3xl">
-            <i class="fas fa-utensils"></i>
-        </a>
-    </div>
+  <!-- Sidebar -->
+  <aside
+  id="sidebar"
+  class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out lg:static lg:w-20 shadow-lg"
+>
+<!-- Tombol Close (khusus mobile) -->
+<button onclick="toggleSidebar()" class="absolute top-4 right-4 lg:hidden text-gray-500 hover:text-red-500">
+    <i class="fas fa-times text-xl"></i>
+</button>
+  <div class="h-full flex flex-col justify-between items-center py-6">
+      <!-- Logo -->
+      <a href="{{ route('dashboard') }}" class="text-orange-500 text-3xl">
+          <i class="fas fa-utensils"></i>
+      </a>
 
-    <!-- Menu Tengah -->
-    <nav class="flex flex-col items-center space-y-6 mt-10">
-        <livewire:sidebar />
-    </nav>
+      <!-- Menu Tengah -->
+      <nav class="flex flex-col items-center space-y-6 mt-10">
+          <livewire:sidebar />
+      </nav>
 
-    <!-- Menu Bawah -->
-    <div class="flex flex-col items-center space-y-6">
+      <!-- Menu Bawah -->
+      <div class="flex flex-col items-center space-y-6">
+          @php
+              $isProfileActive = Route::currentRouteName() === 'profile.edit';
+          @endphp
 
-        @php
-            $isProfileActive = Route::currentRouteName() === 'profile.edit';
-        @endphp
+          <a href="{{ route('profile.edit') }}"
+             class="p-3 rounded-xl {{ $isProfileActive ? 'bg-orange-100 text-orange-600 shadow' : 'text-gray-400 hover:text-orange-600' }}"
+             title="Pengaturan Akun">
+              <i class="fas fa-user-cog text-xl"></i>
+          </a>
 
-        <!-- Profile -->
-        <a href="{{ route('profile.edit') }}"
-           class="p-3 rounded-xl transition-all duration-200
-                  {{ $isProfileActive ? 'bg-orange-100 text-orange-600 shadow' : 'text-gray-400 hover:text-orange-600' }}"
-           title="Pengaturan Akun">
-            <i class="fas fa-user-cog text-xl"></i>
-        </a>
-
-        <!-- Logout -->
-        <form method="POST" action="{{ route('logout') }}">
+          <form method="POST" action="{{ route('logout') }}" id="logoutForm">
             @csrf
-            <button type="submit"
-                class="p-3 rounded-xl text-gray-400 hover:text-red-600 transition-all duration-200"
-                title="Keluar">
+            <button type="button" onclick="confirmLogout()" class="p-3 rounded-xl text-gray-400 hover:text-red-600 transition" title="Keluar">
                 <i class="fas fa-sign-out-alt text-xl"></i>
             </button>
         </form>
-    </div>
-</div>
-
+        
+      </div>
+  </div>
+</aside>
 
 
         <!-- Main Content -->
@@ -109,6 +126,7 @@
     <!-- Livewire Scripts -->
     @livewireScripts
 
+    @filamentScripts
     <!-- SweetAlert Notifikasi -->
     <script>
         window.addEventListener('notify', event => {
@@ -157,6 +175,46 @@
           });
       });
   </script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('-translate-x-full');
+    }
+</script>
+<script>
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Yakin ingin logout?',
+            text: 'Sesi Anda akan diakhiri.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e53e3e',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Ya, logout',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logoutForm').submit();
+            }
+        });
+    }
+</script>
+@if (session('welcome_message'))
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: '{{ session('welcome_message') }}',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        });
+    </script>
+@endif
+
    @stack('scripts')
 </body>
 </html>

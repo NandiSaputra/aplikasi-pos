@@ -89,7 +89,7 @@ class Cart extends Component
         $ppn = $subtotal * 0.10;
         $total = $subtotal + $ppn - $this->discountAmount;
         if ($total < 0) $total = 0;
-        
+   
 
         if ($this->paymentMethod === 'cash' && $this->paidAmount < $total) {
             $this->js('window.dispatchEvent(new CustomEvent("notify", {
@@ -102,6 +102,20 @@ class Cart extends Component
         }
 
         $changeAmount = $this->paidAmount - $total;
+        // Validasi stok
+foreach ($cart as $productId => $item) {
+    $product = Products::find($productId);
+    if ($product && $item['quantity'] > $product->stock) {
+        $this->js('window.dispatchEvent(new CustomEvent("notify", {
+            detail: {
+                type: "error",
+                message: "Stok untuk produk ' . addslashes($item['name']) . ' hanya tersedia ' . $product->stock . ' item."
+            }
+        }))');
+        return;
+    }
+}
+
 
         $transaksi = Transaksi::create([
             'user_id' => Auth::id() ?? 1,
@@ -127,8 +141,10 @@ class Cart extends Component
                 'product_id' => $productId,
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
-                'subtotal' => $item['price'] * $item['quantity'],
+                'discount' => $item['discount'] ?? 0,
+                'subtotal' => ($item['price'] - ($item['discount'] ?? 0)) * $item['quantity'],
             ]);
+            
         
             // ❗ Kurangi stok hanya jika cash
             if ($this->paymentMethod === 'cash') {
@@ -146,6 +162,7 @@ class Cart extends Component
         $this->paidAmount = 0;
         $this->dispatch('cartUpdated');
         $this->dispatch('refreshProducts');
+        $this->dispatch('toggle-cart');
 
     // pembayaran online 
     if ($this->paymentMethod === 'online') {
