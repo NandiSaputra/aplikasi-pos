@@ -16,6 +16,7 @@ class TransaksiDetail extends Model
         'product_id',
         'quantity',
         'price',
+        'buy_price',
         'subtotal',
     ];
 

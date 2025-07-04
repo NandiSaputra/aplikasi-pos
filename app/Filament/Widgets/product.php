@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\TransaksiDetail;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
 
 class product extends ChartWidget
 {
@@ -23,8 +24,12 @@ class product extends ChartWidget
             ->join('products', 'transaction_details.product_id', '=', 'products.id')
             ->where('transactions.payment_status', 'success');
 
+        // ✅ Perbaikan rentang waktu
         if ($startDate && $endDate) {
-            $query->whereBetween('transactions.created_at', [$startDate, $endDate]);
+            $query->whereBetween('transactions.created_at', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
         } elseif ($range) {
             $query = $this->applyRangeFilter($query, $range, 'transactions.created_at');
         }
@@ -62,8 +67,4 @@ class product extends ChartWidget
     {
         return 'bar';
     }
-  
-    
 }
-   
-

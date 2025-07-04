@@ -57,13 +57,15 @@ class ProductByCategory extends Component
     // Tambah ke keranjang
     public function addToCart($productId)
     {
-        $product = Products::select('id', 'name', 'price', 'image', 'stock', 'discount')->findOrFail($productId);
+        $product = Products::with('discounts')->findOrFail($productId);
     
         if ($product->stock <= 0) {
             return $this->js('window.dispatchEvent(new CustomEvent("notify", {
                 detail: { type: "error", message: "Stok Produk Habis!" }
             }))');
         }
+    
+        $price = $product->discounted_price;
     
         $cart = session()->get('cart', []);
     
@@ -77,14 +79,15 @@ class ProductByCategory extends Component
         } else {
             $cart[$productId] = [
                 'name' => $product->name,
-                'price' => $product->discounted_price, // Gunakan harga diskon
+                'price' => $price,
+                'original_price' => $product->price,
                 'image' => $product->image,
                 'quantity' => 1,
+                'discount' => $product->price - $price,
             ];
         }
     
         session()->put('cart', $cart);
-    
         $this->dispatch('cartUpdated');
     
         $this->js('window.dispatchEvent(new CustomEvent("notify", {
@@ -92,11 +95,12 @@ class ProductByCategory extends Component
         }))');
     }
     
+    
 
     public function render()
     {
         $query = Products::with('category')
-            ->select('id', 'name', 'price', 'stock', 'image', 'category_id', 'discount', 'created_at');
+            ->select('id', 'name', 'price', 'stock', 'image', 'category_id', 'created_at');
     
         if (!empty($this->search)) {
             $query->where('name', 'like', '%' . $this->search . '%');

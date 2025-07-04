@@ -20,6 +20,7 @@ class TransaksiResource extends Resource
     protected static ?string $model = Transaksi::class;
 
     protected static ?string $navigationLabel = 'Riwayat Transaksi';
+    protected static ?string $navigationGroup = 'Riwayat';
     protected static ?string $navigationIcon = 'heroicon-o-receipt-refund';
 
     public static function table(Tables\Table $table): Tables\Table
@@ -103,4 +104,8 @@ class TransaksiResource extends Resource
             'index' => Pages\ListTransaksis::route('/'),
         ];
     }
+    public static function canCreate(): bool
+{
+    return false;
+}
 }

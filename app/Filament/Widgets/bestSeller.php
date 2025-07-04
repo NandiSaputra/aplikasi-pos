@@ -5,13 +5,14 @@ namespace App\Filament\Widgets;
 use App\Models\TransaksiDetail;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
 
 class bestSeller extends ChartWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?string $heading = '🔥 Produk Terlaris';
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 3;
 
     protected function getData(): array
     {
@@ -24,12 +25,16 @@ class bestSeller extends ChartWidget
             ->where('transactions.payment_status', 'success');
 
         if ($startDate && $endDate) {
-            $query->whereBetween('transactions.created_at', [$startDate, $endDate]);
+            $query->whereBetween('transactions.created_at', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
         } elseif ($range) {
             $query = $this->applyRangeFilter($query, $range, 'transactions.created_at');
         }
 
-        $topProducts = $query->selectRaw('products.name, SUM(transaction_details.quantity) as total')
+        $topProducts = $query
+            ->selectRaw('products.name, SUM(transaction_details.quantity) as total')
             ->groupBy('products.name')
             ->orderByDesc('total')
             ->limit(5)
@@ -41,7 +46,7 @@ class bestSeller extends ChartWidget
                 [
                     'label' => 'Jumlah Terjual',
                     'data' => $topProducts->pluck('total')->toArray(),
-                    'backgroundColor' => '#f97316', // Warna oranye untuk sorotan
+                    'backgroundColor' => '#f97316',
                 ],
             ],
         ];
@@ -60,9 +65,6 @@ class bestSeller extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar'; // Atau 'horizontalBar' kalau pakai Chart.js eksternal
+        return 'bar';
     }
-
-   
-
 }

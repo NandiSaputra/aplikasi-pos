@@ -5,13 +5,14 @@ namespace App\Filament\Widgets;
 use App\Models\Transaksi;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
 
 class payment extends ChartWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?string $heading = '🧾 Metode Pembayaran';
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
 
     protected function getData(): array
     {
@@ -22,7 +23,10 @@ class payment extends ChartWidget
         $query = Transaksi::where('payment_status', 'success');
 
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            $query->whereBetween('created_at', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
         } elseif ($range) {
             $query = $this->applyRangeFilter($query, $range);
         }
@@ -37,7 +41,7 @@ class payment extends ChartWidget
                 [
                     'label' => 'Metode Pembayaran',
                     'data' => $paymentData->pluck('total')->toArray(),
-                    'backgroundColor' => ['#f59e0b', '#10b981', '#3b82f6', '#ef4444'], // Cash, Midtrans, etc
+                    'backgroundColor' => ['#f59e0b', '#10b981', '#3b82f6', '#ef4444'], // Warna untuk: cash, online, dsb
                 ],
             ],
         ];
@@ -61,6 +65,10 @@ class payment extends ChartWidget
 
     public function getColumnSpan(): int|string|array
     {
-        return 'full'; // bisa ubah ke 'full' jika ingin lebar penuh
+        return 'full';
     }
+    protected function getHeight(): ?string
+{
+    return '100px'; // Adjust this value as needed, e.g., '250px', '40vh', etc.
+}
 }

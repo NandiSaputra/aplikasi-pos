@@ -100,20 +100,32 @@
 
                     <!-- Harga -->
                     <div class="mb-3">
-                        @if ($item->discount > 0)
-                            <div>
-                                <span class="text-red-500 text-xs line-through">
-                                    Rp{{ number_format($item->price, 0, ',', '.') }}
-                                </span><br>
-                                <span class="text-green-600 font-bold text-base">
-                                    Rp{{ number_format($item->discounted_price, 0, ',', '.') }}
-                                </span>
-                            </div>
-                        @else
-                            <span class="text-orange-600 font-bold text-base">
+                        @php
+                        $activeDiscount = $item->getActiveDiscount();
+                    @endphp
+                    
+                    @if ($activeDiscount)
+                        <div>
+                            <span class="text-red-500 text-xs line-through">
                                 Rp{{ number_format($item->price, 0, ',', '.') }}
+                            </span><br>
+                            <span class="text-green-600 font-bold text-base">
+                                Rp{{ number_format($item->discounted_price, 0, ',', '.') }}
                             </span>
-                        @endif
+                            <div class="text-xs text-gray-500">
+                                @if($activeDiscount->type === 'percentage')
+                                    Diskon {{ $activeDiscount->value }}%
+                                @else
+                                    Potongan Rp{{ number_format($activeDiscount->value, 0, ',', '.') }}
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        <span class="text-orange-600 font-bold text-base">
+                            Rp{{ number_format($item->price, 0, ',', '.') }}
+                        </span>
+                    @endif
+                    
                     </div>
 
                     <!-- Tombol -->

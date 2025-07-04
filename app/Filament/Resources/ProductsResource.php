@@ -3,64 +3,85 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductsResource\Pages;
-use App\Filament\Resources\ProductsResource\RelationManagers;
 use App\Models\Products;
 use Filament\Forms;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductsResource extends Resource
 {
     protected static ?string $model = Products::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-inbox-stack';
+    protected static ?string $navigationLabel = 'Produk';
+    protected static ?string $pluralLabel = 'Produk';
+    protected static ?string $navigationGroup = 'Manajemen Produk';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                TextInput::make('name')->label('Name')->required(),
-                Select::make('category_id')->label('Category')->relationship('category', 'name')->required()->searchable()
-                ->preload(),
-                TextInput::make('price')->label('Price')->required(),
-                TextInput::make('stock')->label('Stock')->required(),
-                TextInput::make('discount')
-                    ->label('Diskon (%)')
+                TextInput::make('name')
+                    ->label('Nama Produk')
+                    ->required()
+                    ->maxLength(255),
+
+                Select::make('category_id')
+                    ->label('Kategori')
+                    ->relationship('category', 'name')
+                    ->required()
+                    ->searchable()
+                    ->preload(),
+                    
+
+                    TextInput::make('buy_price')
+                    ->label('Harga Beli')
                     ->numeric()
-                    ->minValue(0)
-                    ->maxValue(100)
-                    ->default(0)
-                    ->suffix('%')
-                    ->helperText('Masukkan diskon dalam persen, contoh: 10 untuk diskon 10%'),
-                 
+                    ->readOnly()
+                    ->disabled()
+                    ->dehydrated(false) // ← agar tidak ikut terkirim saat submit
+                    ->helperText('Harga beli diperbarui otomatis dari pembelian.')
+                    ->default(0),
+
+                TextInput::make('price')
+                    ->label('Harga Jual termasuk ppn 11%')
+                    ->numeric()
+                    ->required()
+                    ->default(0),
+
+                    TextInput::make('stock')
+    ->label('Stok')
+    ->numeric()
+    ->readOnly()
+    ->disabled()
+    ->dehydrated(false)
+    ->helperText('Stok diperbarui otomatis saat pembelian atau penjualan.')
+    ->default(0),
+
+             
 
                 FileUpload::make('image')
-                    ->label('Image')
+                    ->label('Gambar')
+                    ->image()
                     ->disk('public')
                     ->directory('produk')
-                    ->image()
                     ->previewable(true)
                     ->imagePreviewHeight(150)
                     ->openable()
                     ->downloadable()
-                    ->columnSpanFull()
-                    ->filled() // ini memastikan data tidak hilang saat edit
+                    ->filled() // untuk edit tetap muncul
                     ->preserveFilenames()
                     ->maxSize(2048)
-                    ->helperText('Upload cover image (JPG, PNG)')
+                    ->required(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
                     ->visibility('public')
-                    ->required(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord),
-                
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -68,37 +89,51 @@ class ProductsResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->sortable()->searchable(),
-                TextColumn::make('category.name')->sortable()->searchable(),
-                TextColumn::make('price')->sortable()->searchable(),
-                TextColumn::make('stock')->sortable()->searchable(),
-                TextColumn::make('discount')
-                    ->label('Diskon')
-                    ->formatStateUsing(fn ($state) => $state ? $state . '%' : '-')
+                ImageColumn::make('image')
+                    ->label('Foto')
+                    ->disk('public')
+                    ->width(80)
+                    ->height(60),
+
+                TextColumn::make('name')
+                    ->label('Nama')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('category.name')
+                    ->label('Kategori')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('buy_price')
+                    ->label('Harga Beli')
+                    ->money('IDR', true)
                     ->sortable(),
 
-                ImageColumn::make('image')->label('Image') ->disk('public')->width(100)->height(60),            // opsional: atur ukuran gambar
+                TextColumn::make('price')
+                    ->label('Harga Jual termasuk ppn 11%')
+                    ->money('IDR', true)
+                    ->sortable(),
 
-            
+                TextColumn::make('stock')
+                    ->label('Stok')
+                    ->sortable(),
+
+              
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

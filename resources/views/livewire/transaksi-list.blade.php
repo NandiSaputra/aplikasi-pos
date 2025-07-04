@@ -119,9 +119,8 @@
                         </span>
                     </td>
                     <td class="px-4 py-2 text-right">
-                        <button wire:click="showDetail({{ $trx->id }})"
-                            class="text-blue-600 hover:underline text-sm font-medium">
-                            Detail
+                        <button wire:click="showDetail({{ $trx->id }})" class="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs font-semibold shadow">
+                            🔎 Detail
                         </button>
                     </td>
                 </tr>
@@ -139,17 +138,137 @@
     <div class="mt-4">
         {{ $transaksis->links() }}
     </div>
-</div>
+   
+  <!-- Modal Detail Transaksi -->
+  @if($showModal && $selectedTransaksi)
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 p-6 relative animate-fade-in">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-center border-b pb-4 mb-4">
+              <h2 class="text-2xl font-bold text-gray-800">
+                  🔎 Detail Transaksi - <span class="text-orange-600">{{ $selectedTransaksi->invoice_number }}</span>
+              </h2>
+              <button wire:click="closeModal" class="text-gray-400 hover:text-red-500 text-3xl leading-none">
+                  &times;
+              </button>
+          </div>
+  
+          <!-- Informasi Transaksi -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-700 mb-6">
+              <div>
+                  <div class="text-gray-500 font-medium">Total</div>
+                  <div class="font-bold text-lg text-orange-600">
+                      Rp{{ number_format($selectedTransaksi->total_price, 0, ',', '.') }}
+                  </div>
+              </div>
+              <div>
+                  <div class="text-gray-500 font-medium">Metode Pembayaran</div>
+                  <div class="font-semibold">
+                      {{ $selectedTransaksi->payment_method === 'cash' ? '💵 Tunai' : '🌐 Online' }}
+                  </div>
+              </div>
+              <div>
+                  <div class="text-gray-500 font-medium">Tanggal</div>
+                  <div>{{ \Carbon\Carbon::parse($selectedTransaksi->created_at)->translatedFormat('d M Y H:i') }}</div>
+              </div>
+              <div class="md:col-span-3">
+                  <div class="text-gray-500 font-medium">Status</div>
+                  @php
+                      $colorClass = match($selectedTransaksi->payment_status) {
+                          'success' => 'bg-green-100 text-green-700',
+                          'pending' => 'bg-yellow-100 text-yellow-700',
+                          'failed' => 'bg-red-100 text-red-700',
+                          'cancelled', 'expired' => 'bg-gray-100 text-gray-700',
+                          default => 'bg-gray-100 text-gray-700',
+                      };
+                  @endphp
+                  <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
+                      {{ ucfirst($selectedTransaksi->payment_status) }}
+                  </span>
+              </div>
+  
+              @if($selectedTransaksi->ppn)
+              <div>
+                  <div class="text-gray-500 font-medium">PPN (11%)</div>
+                  <div class="text-sm text-gray-800">Rp{{ number_format($selectedTransaksi->ppn, 0, ',', '.') }}</div>
+              </div>
+              @endif
+  
+              @if($selectedTransaksi->coupon_code)
+              <div>
+                  <div class="text-gray-500 font-medium">Kode Kupon</div>
+                  <div class="text-sm text-green-700 font-semibold">{{ $selectedTransaksi->coupon_code }}</div>
+              </div>
+              @endif
+  
+              @if($selectedTransaksi->discount_amount)
+              <div>
+                  <div class="text-gray-500 font-medium">Potongan Kupon</div>
+                  <div class="text-sm text-red-600 font-semibold">
+                      -Rp{{ number_format($selectedTransaksi->discount_amount, 0, ',', '.') }}
+                  </div>
+              </div>
+              @endif
+          </div>
+  
+          <!-- Daftar Produk -->
+          <div class="border rounded-xl overflow-hidden shadow-sm">
+              <table class="min-w-full text-sm text-left text-gray-700">
+                  <thead class="bg-gray-100 text-gray-600 font-semibold">
+                      <tr>
+                          <th class="px-5 py-3">Produk</th>
+                          <th class="px-5 py-3 text-center">Qty</th>
+                          <th class="px-5 py-3 text-right">Harga</th>
+                          <th class="px-5 py-3 text-right">Subtotal</th>
+                      </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200 bg-white">
+                      @foreach($selectedTransaksi->details as $detail)
+                      <tr>
+                          <td class="px-5 py-3">{{ $detail->product->name }}</td>
+                          <td class="px-5 py-3 text-center">{{ $detail->quantity }}</td>
+                          <td class="px-5 py-3 text-right">Rp{{ number_format($detail->price, 0, ',', '.') }}</td>
+                          <td class="px-5 py-3 text-right">Rp{{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                      </tr>
+                      @endforeach
+                  </tbody>
+              </table>
+          </div>
+  
+          <!-- Tombol Tutup -->
+          <div class="mt-6 text-right">
+              <button wire:click="closeModal" class="bg-gray-200 hover:bg-gray-300 text-sm px-4 py-2 rounded-lg">
+                  ❌ Tutup
+              </button>
+          </div>
+      </div>
+  </div>
+  @endif
+  
+  
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let trxChart, topProductsChart, paymentChart, allProductsChart;
-
         function renderCharts(data) {
-            trxChart?.destroy();
-            topProductsChart?.destroy();
-            paymentChart?.destroy();
-            allProductsChart?.destroy();
+    if (!data) return;
+
+    const {
+        labels = [],
+        values = [],
+        topProducts = [],
+        allProducts = [],
+        paymentMethods = {}
+    } = data;
+
+    // Lanjut render chart hanya jika data valid
+    trxChart?.destroy();
+    topProductsChart?.destroy();
+    paymentChart?.destroy();
+    allProductsChart?.destroy();
+
+
 
             trxChart = new Chart(document.getElementById('trxChart'), {
                 type: 'line',

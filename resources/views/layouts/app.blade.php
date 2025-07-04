@@ -8,8 +8,8 @@
 
     <!-- Tailwind CSS & JS via Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @filamentStyles
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+ 
     <!-- Livewire Styles -->
     @livewireStyles
 
@@ -126,7 +126,7 @@
     <!-- Livewire Scripts -->
     @livewireScripts
 
-    @filamentScripts
+   
     <!-- SweetAlert Notifikasi -->
     <script>
         window.addEventListener('notify', event => {

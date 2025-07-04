@@ -20,6 +20,8 @@ class Transaksi extends Model
         'snap_token',
         'coupon_code', // ← ini penting
     'discount_amount',
+
+    'product_discount_total'
     ];
 
     // Relasi ke user

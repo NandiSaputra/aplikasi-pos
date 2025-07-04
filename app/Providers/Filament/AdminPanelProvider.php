@@ -43,6 +43,8 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 
             ])
+          
+        
            
             ->middleware([
                 EncryptCookies::class,

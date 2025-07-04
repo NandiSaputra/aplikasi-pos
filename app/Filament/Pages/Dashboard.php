@@ -2,17 +2,24 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\bestSeller;
+use App\Filament\Widgets\payment;
+use App\Filament\Widgets\product;
+use App\Filament\Widgets\StatsOverview;
+use App\Filament\Widgets\totalSales;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Widgets\StatsOverviewWidget;
 
 class Dashboard extends BaseDashboard
 {
     use BaseDashboard\Concerns\HasFiltersForm;
 
+   
     public function filtersForm(Form $form): Form
     {
         return $form
@@ -23,12 +30,12 @@ class Dashboard extends BaseDashboard
                         Select::make('range')
                             ->label('Rentang Waktu')
                             ->options([
-                                'daily' => 'Harian',
-                                'weekly' => 'Mingguan',
-                                'monthly' => 'Bulanan',
-                                'yearly' => 'Tahunan',
+                                'daily' => 'Hari Ini',
+                                'weekly' => 'Minggu',
+                                'monthly' => 'Bulan',
+                                'yearly' => 'Tahun',
                             ])
-                            ->default('monthly'),
+                            ->default('daily'),
 
                         // Tanggal mulai
                         DatePicker::make('startDate')
@@ -42,6 +49,9 @@ class Dashboard extends BaseDashboard
                             ->maxDate(now()),
                     ])
                     ->columns(3),
-            ]);
+                            ]);
+
+         
     }
+
 }

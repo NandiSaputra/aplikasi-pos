@@ -53,9 +53,7 @@
     {{-- TOTAL & PEMBAYARAN --}}
     @php
         $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
-        $ppn = $subtotal * 0.10;
-        $totalBeforeDiscount = $subtotal + $ppn;
-        $total = max(0, $totalBeforeDiscount - $discountAmount);
+        $total = max(0, $subtotal - $discountAmount);
         $change = $paymentMethod === 'cash' ? max(0, floatval($paidAmount) - $total) : 0;
     @endphp
 
@@ -64,10 +62,7 @@
             <span>Subtotal</span>
             <span class="font-semibold">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
         </div>
-        <div class="flex justify-between text-gray-700">
-            <span>PPN (10%)</span>
-            <span class="font-semibold">Rp{{ number_format($ppn, 0, ',', '.') }}</span>
-        </div>
+      
         @if ($discountAmount > 0)
             <div class="flex justify-between text-green-600 font-semibold">
                 <span>Diskon</span>

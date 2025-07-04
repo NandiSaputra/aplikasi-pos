@@ -2,18 +2,17 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Transaksi;
+use App\Models\Purchase;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
-class totalSales extends ChartWidget
+class totalBuy extends ChartWidget
 {
     use InteractsWithPageFilters;
-
-    protected static ?string $heading = '📈 Total Penjualan';
-    protected static ?int $sort = 3;
+    protected static ?string $heading = '📦 Total Pembelian Suplier';
+    protected static ?int $sort = 4;
 
     protected function getData(): array
     {
@@ -21,39 +20,38 @@ class totalSales extends ChartWidget
         $endDate = $this->filters['endDate'] ?? null;
         $range = $this->filters['range'] ?? null;
 
-        $query = Transaksi::query()
-            ->where('payment_status', 'success');
+        $query = Purchase::query();
 
-        // Apply filter date
+        // Apply filter tanggal
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
-            $query->whereBetween('created_at', [$start, $end]);
+            $query->whereBetween('purchase_date', [$start, $end]);
         } elseif ($range) {
-            $query = $this->applyRangeFilter($query, $range);
+            $query = $this->applyRangeFilter($query, $range, 'purchase_date');
         }
 
         $labels = [];
         $data = [];
 
-        // Daily: tampilkan data hari ini per jam
+        // DAILY
         if ($range === 'daily') {
-            $sales = $query
-                ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('SUM(total_price) as total'))
-                ->groupBy(DB::raw('HOUR(created_at)'))
+            $purchases = $query
+                ->select(DB::raw('HOUR(purchase_date) as hour'), DB::raw('SUM(total_price) as total'))
+                ->groupBy(DB::raw('HOUR(purchase_date)'))
                 ->orderBy('hour')
                 ->get();
 
             for ($i = 0; $i < 24; $i++) {
                 $labels[] = $i . ':00';
-                $data[] = (float) $sales->firstWhere('hour', $i)?->total ?? 0;
+                $data[] = (float) $purchases->firstWhere('hour', $i)?->total ?? 0;
             }
-        }
-        // Weekly: tampilkan data 7 hari (minggu ini)
-        elseif ($range === 'weekly') {
-            $sales = $query
-                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_price) as total'))
-                ->groupBy(DB::raw('DATE(created_at)'))
+
+        // WEEKLY
+        } elseif ($range === 'weekly') {
+            $purchases = $query
+                ->select(DB::raw('DATE(purchase_date) as date'), DB::raw('SUM(total_price) as total'))
+                ->groupBy(DB::raw('DATE(purchase_date)'))
                 ->orderBy('date')
                 ->get();
 
@@ -61,40 +59,38 @@ class totalSales extends ChartWidget
             for ($i = 0; $i < 7; $i++) {
                 $date = $weekStart->copy()->addDays($i)->toDateString();
                 $labels[] = Carbon::parse($date)->translatedFormat('D');
-                $data[] = (float) $sales->firstWhere('date', $date)?->total ?? 0;
+                $data[] = (float) $purchases->firstWhere('date', $date)?->total ?? 0;
             }
-        }
-        // Monthly: tampilkan total penjualan bulan ini (1 label saja)
-        elseif ($range === 'monthly') {
+
+        // MONTHLY
+        } elseif ($range === 'monthly') {
             $startOfMonth = now()->startOfMonth();
             $endOfMonth = now()->endOfMonth();
-        
-            $sales = (clone $query)
-                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_price) as total'))
-                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-                ->groupBy(DB::raw('DATE(created_at)'))
+
+            $purchases = (clone $query)
+                ->select(DB::raw('DATE(purchase_date) as date'), DB::raw('SUM(total_price) as total'))
+                ->whereBetween('purchase_date', [$startOfMonth, $endOfMonth])
+                ->groupBy(DB::raw('DATE(purchase_date)'))
                 ->orderBy('date')
                 ->get();
-        
-            // Siapkan label tanggal & totalnya
+
             $period = \Carbon\CarbonPeriod::create($startOfMonth, $endOfMonth);
             foreach ($period as $date) {
                 $labels[] = $date->translatedFormat('j M');
-                $data[] = (float) $sales->firstWhere('date', $date->toDateString())?->total ?? 0;
+                $data[] = (float) $purchases->firstWhere('date', $date->toDateString())?->total ?? 0;
             }
-        }
-        
-        // Yearly atau default: tampilkan data 12 bulan
-        else {
-            $sales = $query
-                ->select(DB::raw('MONTH(created_at) as month'), DB::raw('SUM(total_price) as total'))
-                ->groupBy(DB::raw('MONTH(created_at)'))
+
+        // YEARLY
+        } else {
+            $purchases = $query
+                ->select(DB::raw('MONTH(purchase_date) as month'), DB::raw('SUM(total_price) as total'))
+                ->groupBy(DB::raw('MONTH(purchase_date)'))
                 ->orderBy('month')
                 ->get();
 
             for ($i = 1; $i <= 12; $i++) {
                 $labels[] = Carbon::create()->month($i)->locale('id')->translatedFormat('F');
-                $data[] = (float) $sales->firstWhere('month', $i)?->total ?? 0;
+                $data[] = (float) $purchases->firstWhere('month', $i)?->total ?? 0;
             }
         }
 
@@ -102,10 +98,10 @@ class totalSales extends ChartWidget
             'labels' => $labels,
             'datasets' => [
                 [
-                    'label' => 'Total Penjualan',
+                    'label' => 'Total Pembelian',
                     'data' => $data,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.2)',
+                    'borderColor' => '#f97316',
+                    'backgroundColor' => 'rgba(251, 146, 60, 0.3)',
                     'fill' => true,
                     'tension' => 0.4,
                 ],
@@ -118,9 +114,7 @@ class totalSales extends ChartWidget
         return 'line';
     }
 
- 
-
-    protected function applyRangeFilter($query, string $range, string $column = 'created_at')
+    protected function applyRangeFilter($query, string $range, string $column = 'purchase_date')
     {
         return match ($range) {
             'daily' => $query->whereDate($column, today()),

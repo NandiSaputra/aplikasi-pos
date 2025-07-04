@@ -19,13 +19,15 @@ class CategoriesResource extends Resource
 {
     protected static ?string $model = Categories::class;
 
+    protected static ?string $navigationLabel = 'Kategori Produk';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Manajemen Produk';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                TextInput::make('name'),
+                TextInput::make('name')->unique(ignoreRecord: true),
             ]);
     }
 
