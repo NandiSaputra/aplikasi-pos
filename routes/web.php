@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Exports\LaporanExport;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Excel as ExcelExcel;
 use Maatwebsite\Excel\Facades\Excel;
@@ -60,7 +61,18 @@ Route::middleware('auth')->group(function () {
         return view('pending', compact('invoice'));
     })->name('pending.transaksi');
     
-    
+
+
+Route::get('/cetak-struk/{id}', function ($id) {
+    $transaksi = Transaksi::with('details.product')->findOrFail($id);
+
+    if ($transaksi->payment_status !== 'success') {
+        abort(403, 'Struk hanya bisa dicetak untuk transaksi yang berhasil.');
+    }
+
+    return view('print.struk', compact('transaksi'));
+})->name('cetak-struk');
+
 
 
 

@@ -238,6 +238,14 @@
   
           <!-- Tombol Tutup -->
           <div class="mt-6 text-right">
+            @if ($selectedTransaksi->payment_status === 'success')
+    <a href="{{ route('cetak-struk', $selectedTransaksi->id) }}"
+       target="_blank"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm mr-2">
+        🖨 Cetak Struk
+    </a>
+@endif
+
               <button wire:click="closeModal" class="bg-gray-200 hover:bg-gray-300 text-sm px-4 py-2 rounded-lg">
                   ❌ Tutup
               </button>
