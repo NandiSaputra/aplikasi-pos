@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\TransaksiExport;
 use App\Filament\Resources\TransaksiResource\Pages;
 use App\Models\Transaksi;
 use Filament\Forms;
@@ -14,6 +15,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TransaksiResource extends Resource
 {
@@ -32,9 +34,14 @@ class TransaksiResource extends Resource
                     ->searchable(), // ENABLE SEARCH
                 TextColumn::make('user.name')->label('Kasir'),
                 TextColumn::make('payment_method')->label('Metode'),
-                TextColumn::make('total_price')->money('IDR', true),
+         
                 TextColumn::make('payment_status')->badge(),
+                TextColumn::make('coupon_code')->label('Kode Kupon')->searchable(),
+                TextColumn::make('discount_amount')->label('Diskon Kupon')->money('IDR', true),
+                TextColumn::make('product_discount_total')->label('Diskon Produk')->money('IDR', true),
+                TextColumn::make('total_price')->money('IDR', true),
                 TextColumn::make('created_at')->label('Waktu')->dateTime('d M Y'),
+       
             ])
             ->filters([
                 // ✅ Filter status pembayaran
@@ -58,6 +65,7 @@ class TransaksiResource extends Resource
                     })
                     ->label('Rentang Tanggal'),
             ])
+       
             ->actions([
                 // ✅ Modal detail transaksi
                 Action::make('detail')
@@ -94,6 +102,8 @@ class TransaksiResource extends Resource
                         ];
                     })
                     ->modalSubmitAction(false),
+                  
+                    
             ])
             ->defaultSort('created_at', 'desc');
     }

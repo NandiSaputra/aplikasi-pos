@@ -7,6 +7,10 @@ class Purchase extends Model
 {
     protected $table = 'purchases';
     protected $fillable = ['supplier_id', 'purchase_date', 'total_price'];
+    protected $casts = [
+        'purchase_date' => 'date',
+    ];
+    
 
     public function supplier()
     {
