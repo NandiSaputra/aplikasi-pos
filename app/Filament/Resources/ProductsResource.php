@@ -111,7 +111,7 @@ class ProductsResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('price')
-                    ->label('Harga Jual termasuk ppn 11%')
+                    ->label('Harga Jual')
                     ->money('IDR', true)
                     ->sortable(),
 
