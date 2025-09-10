@@ -99,6 +99,7 @@ Jalankan perintah berikut untuk membuat symbolic link ke `storage`:
 
 ```bash
 php artisan storage:link
+php artisan key:generate
 ```
 
 ---
