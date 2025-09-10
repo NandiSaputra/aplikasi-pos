@@ -35,7 +35,7 @@ Atau download dan ekstrak secara manual ke folder seperti `C:/laragon/www/aplika
 
 ```bash
 composer install
-npm install && npm run build
+npm install && npm run dev
 ```
 
 ---
